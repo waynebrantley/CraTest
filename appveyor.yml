@@ -1,0 +1,31 @@
+configuration: Release
+init:
+- cmd: >-
+    tzutil /s "Eastern Standard Time"
+install:
+  - ps: Install-Product node LTS
+image: Visual Studio 2019
+pull_requests:
+  do_not_increment_build_number: true
+skip_branch_with_pr: true
+test: off
+shallow_clone: true
+build_script:
+- cmd: npm install -g npm@latest
+- cmd: cd my-app
+- cmd: npm ci
+# replace version token in index.html page
+- cmd: npm run build
+- cmd: dir .\build\static\js
+- ps: |
+      $path = ".\build\index.html"
+      $branch = $env:APPVEYOR_REPO_BRANCH
+      $version = $env:APPVEYOR_BUILD_VERSION
+      if ( $branch -ne "master" ){
+        if ($branch.Length -gt 20){
+           $branch = $branch.SubString(0,19)
+        }
+       $version = "$version-$branch"
+      }
+      Write-Host $version
+- cmd: cd ..\..
